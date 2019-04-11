@@ -61,6 +61,10 @@ public class SNT {
 
 	private SNT() {}
 
+	public synchronized static Context getContext() {
+		return context;
+	}
+
 	private synchronized static void initialize() {
 		if (initialized) return;
 		if (context == null) context = (Context) IJ.runPlugIn("org.scijava.Context",

@@ -2360,6 +2360,11 @@ public class SimpleNeuriteTracer extends MultiDThreePanes implements
 				getUI().recViewer.syncPathManagerList();
 			}).start();
 		}
+		if (getUI() != null && getUI().sciViewSNT != null) {
+			new Thread(() -> {
+				getUI().sciViewSNT.syncPathManagerList();
+			}).start();
+		}
 	}
 
 	/*

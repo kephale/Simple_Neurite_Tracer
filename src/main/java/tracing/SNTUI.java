@@ -104,6 +104,8 @@ import ij3d.Content;
 import ij3d.ContentConstants;
 import ij3d.Image3DUniverse;
 import ij3d.ImageWindow3D;
+import sc.iview.SciView;
+import sc.iview.SciViewService;
 import sholl.ShollUtils;
 import tracing.analysis.TreeAnalyzer;
 import tracing.event.SNTEvent;
@@ -134,7 +136,9 @@ public class SNTUI extends JDialog {
 	/* Deprecated stuff to be removed soon */
 	@Deprecated
 	private final String noColorImageString = "[None]";
-	@Deprecated
+
+	protected SciViewSNT sciViewSNT;
+    @Deprecated
 	private ImagePlus currentColorImage;
 	@Deprecated
 	private JComboBox<String> colorImageChoice;
@@ -206,6 +210,11 @@ public class SNTUI extends JDialog {
 	protected Viewer3D recViewer;
 	protected Frame recViewerFrame;
 	private JButton openRecViewer;
+
+	/* SciView Viewer */
+	protected SciView sciView;
+	//protected Frame recViewerFrame;
+	private JButton openSciView;
 
 	protected final GuiListener listener;
 
@@ -385,6 +394,7 @@ public class SNTUI extends JDialog {
 			c3.gridy++;
 			tab3.add(legacy3DViewerPanel(), c3);
 			addSpacer(tab3, c3);
+			// TODO add SciView launch button
 			GuiUtils.addSeparator(tab3, "SciView", true, c3);
 			++c3.gridy;
 			final String msg3 =
@@ -392,6 +402,8 @@ public class SNTUI extends JDialog {
 					"Viewer providing 3D visualization and virtual reality capabilities " +
 					"for both images and meshes. It is not yet available in SNT.";
 			tab3.add(largeMsg(msg3), c3);
+			c3.gridy++;
+			tab3.add(sciviewViewerPanel(), c3);
 
 			{
 				tabbedPane.setIconAt(0, IconFactory.getTabbedPaneIcon(GLYPH.HOME));
@@ -1609,6 +1621,26 @@ public class SNTUI extends JDialog {
 		gdb.fill = GridBagConstraints.HORIZONTAL;
 		gdb.weightx = 0.5;
 		panel.add(openRecViewer, gdb);
+		return panel;
+	}
+
+	private JPanel sciviewViewerPanel() {
+		openSciView = new JButton("Open SciView Viewer");
+		openSciView.addActionListener(e -> {
+			// if (noPathsError()) return;
+			if (sciView == null) {
+				SciViewService sciViewService = SNT.getContext().getService(SciViewService.class);
+				sciView = sciViewService.getOrCreateActiveSciView();
+				sciViewSNT.sciView = sciView;
+			}
+		});
+
+		// Build panel
+		final JPanel panel = new JPanel(new GridBagLayout());
+		final GridBagConstraints gdb = new GridBagConstraints();
+		gdb.fill = GridBagConstraints.HORIZONTAL;
+		gdb.weightx = 0.5;
+		panel.add(openSciView, gdb);
 		return panel;
 	}
 
