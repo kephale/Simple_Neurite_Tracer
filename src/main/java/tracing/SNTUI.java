@@ -114,15 +114,7 @@ import tracing.gui.GuiUtils;
 import tracing.gui.IconFactory;
 import tracing.gui.IconFactory.GLYPH;
 import tracing.gui.SigmaPalette;
-import tracing.gui.cmds.ChooseDatasetCmd;
-import tracing.gui.cmds.CompareFilesCmd;
-import tracing.gui.cmds.JSONImporterCmd;
-import tracing.gui.cmds.MLImporterCmd;
-import tracing.gui.cmds.MultiSWCImporterCmd;
-import tracing.gui.cmds.OpenDatasetCmd;
-import tracing.gui.cmds.RemoteSWCImporterCmd;
-import tracing.gui.cmds.ResetPrefsCmd;
-import tracing.gui.cmds.ShowCorrespondencesCmd;
+import tracing.gui.cmds.*;
 import tracing.hyperpanes.MultiDThreePanes;
 import tracing.io.FlyCircuitLoader;
 import tracing.io.NeuroMorphoLoader;
@@ -138,7 +130,8 @@ public class SNTUI extends JDialog {
 	private final String noColorImageString = "[None]";
 
 	protected SciViewSNT sciViewSNT;
-    @Deprecated
+
+	@Deprecated
 	private ImagePlus currentColorImage;
 	@Deprecated
 	private JComboBox<String> colorImageChoice;
@@ -213,7 +206,6 @@ public class SNTUI extends JDialog {
 
 	/* SciView Viewer */
 	protected SciView sciView;
-	//protected Frame recViewerFrame;
 	private JButton openSciView;
 
 	protected final GuiListener listener;
@@ -1626,12 +1618,27 @@ public class SNTUI extends JDialog {
 
 	private JPanel sciviewViewerPanel() {
 		openSciView = new JButton("Open SciView Viewer");
+
 		openSciView.addActionListener(e -> {
 			// if (noPathsError()) return;
 			if (sciView == null) {
-				SciViewService sciViewService = SNT.getContext().getService(SciViewService.class);
-				sciView = sciViewService.getOrCreateActiveSciView();
-				sciViewSNT.sciView = sciView;
+//				final SciViewService sciViewService = plugin.getContext().getService(
+//					SciViewService.class);
+				//sciViewViewer.setDefaultColor(new ColorRGB(plugin.deselectedColor.getRed(),
+				//	plugin.deselectedColor.getGreen(), plugin.deselectedColor.getBlue()));
+				sciViewSNT = new SciViewSNT();
+				(new CmdRunner(OpenSciViewCmd.class)).execute();
+//				while( sciViewSNT == null || sciViewSNT.sciView == null || !sciViewSNT.sciView.isInitialized()  ) {
+//					try {
+//						Thread.sleep(20);
+//					} catch (InterruptedException ex) {
+//						ex.printStackTrace();
+//					}
+//				}
+				if (pathAndFillManager.size() > 0) sciViewSNT.syncPathManagerList();
+//				SciViewService sciViewService = SNT.getContext().getService(SciViewService.class);
+//				sciView = sciViewService.getOrCreateActiveSciView();
+//				sciViewSNT.sciView = sciView;
 			}
 		});
 
@@ -2664,8 +2671,22 @@ public class SNTUI extends JDialog {
 	}
 
 	public void setReconstructionViewer(final Viewer3D recViewer) {
-			this.recViewer = recViewer;
-			openRecViewer.setEnabled(recViewer==null);
+		this.recViewer = recViewer;
+		openRecViewer.setEnabled(recViewer==null);
+	}
+
+	public SciView getSciView() {
+		return sciView;
+	}
+
+	public void setSciView(final SciView sciView) {
+		System.out.println("Setting SciView in SNTUI");
+		this.sciView = sciView;
+		if( this.sciViewSNT == null ) {
+			this.sciViewSNT = new SciViewSNT();
+		}
+		this.sciViewSNT.sciView = sciView;
+		openSciView.setEnabled(this.sciView==null);
 	}
 
 	protected void reset() {

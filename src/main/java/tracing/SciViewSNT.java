@@ -3,29 +3,24 @@ package tracing;
 import cleargl.GLVector;
 import graphics.scenery.*;
 import net.imagej.ImageJ;
-import net.imagej.display.ColorTables;
 import net.imglib2.display.ColorTable;
 import org.jzy3d.colors.ISingleColorable;
 import org.jzy3d.plot3d.primitives.AbstractWireframeable;
 import org.scijava.util.ColorRGB;
 import sc.iview.SciView;
+import sc.iview.SciViewService;
 import sc.iview.vector.ClearGLVector3;
 import sc.iview.vector.DoubleVector3;
 import sc.iview.vector.FloatVector3;
 import sc.iview.vector.Vector3;
-import tracing.analysis.TreeAnalyzer;
-import tracing.analysis.TreeColorMapper;
 import tracing.gui.GuiUtils;
 import tracing.util.PointInImage;
 import tracing.util.SNTColor;
-import tracing.viewer.Viewer3D;
 
 import java.awt.*;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
 
 public class SciViewSNT {
@@ -35,28 +30,75 @@ public class SciViewSNT {
     private final static String PATH_MANAGER_TREE_LABEL = "Path Manager Contents";
 
     protected SciView sciView;
-    private HashMap<String, Node> plottedTrees;
+    private Map<String, Node> plottedTrees;
+
+    public SciViewSNT() {
+        plottedTrees = new TreeMap<String,Node>();
+    }
+
+
+	private void addItemToManager(final String label) {
+
+	}
+
+	private String makeUniqueKey(final Map<String, ?> map, final String key) {
+		for (int i = 2; i <= 100; i++) {
+			final String candidate = key + " (" + i + ")";
+			if (!map.containsKey(candidate)) return candidate;
+		}
+		return key + " (" + UUID.randomUUID() + ")";
+	}
+
+	private String getUniqueLabel(final Map<String, ?> map,
+		final String fallbackPrefix, final String candidate)
+	{
+		final String label = (candidate == null || candidate.trim().isEmpty())
+			? fallbackPrefix : candidate;
+		return (map.containsKey(label)) ? makeUniqueKey(map, label) : label;
+	}
+
+    /**
+	 * Adds a tree to this viewer.
+	 *
+	 * @param tree the {@link Tree} to be added. The Tree's label will be used as
+	 *          identifier. It is expected to be unique when rendering multiple
+	 *          Trees, if not (or no label exists) a unique label will be
+	 *          generated.
+	 * @see Tree#getLabel()
+	 */
+	public void add(final Tree tree) {
+		final String label = getUniqueLabel(plottedTrees, "Tree ", tree.getLabel());
+		final ShapeTree shapeTree = new ShapeTree(tree);
+		plottedTrees.put(label, shapeTree);
+		addItemToManager(label);
+		for( Node node : shapeTree.getChildren() ) {
+		    sciView.addNode(node);
+        }
+	}
+
 
     public boolean syncPathManagerList() {
-//        if (SNT.getPluginInstance() == null) throw new IllegalArgumentException(
-//                "SNT is not running.");
-//        final Tree tree = new Tree(SNT.getPluginInstance().getPathAndFillManager()
-//                .getPathsFiltered());
-//        if (plottedTrees.containsKey(PATH_MANAGER_TREE_LABEL)) {// PATH_MANAGER_TREE_LABEL, the value of this is the *new* tree to add
-//            // TODO If the Node exists, then remove and add new one to replace
-//            sciView.getScene().getGraph().remove(plottedTrees.get(
-//                    PATH_MANAGER_TREE_LABEL).get());
-//            final Viewer3D.ShapeTree newShapeTree = new Viewer3D.ShapeTree(tree);
-//            plottedTrees.replace(PATH_MANAGER_TREE_LABEL, newShapeTree);
-//            chart.add(newShapeTree.get(), viewUpdatesEnabled);
-//        }
-//        else {
-//            // TODO otherwise add node
-//            tree.setLabel(PATH_MANAGER_TREE_LABEL);
-//            add(tree);
-//        }
-//        updateView();// TODO adjust viewport to fit in screen
-//        return plottedTrees.get(PATH_MANAGER_TREE_LABEL).getVisible();
+        if (SNT.getPluginInstance() == null) throw new IllegalArgumentException(
+                "SNT is not running.");
+        final Tree tree = new Tree(SNT.getPluginInstance().getPathAndFillManager()
+                .getPathsFiltered());
+        if (plottedTrees.containsKey(PATH_MANAGER_TREE_LABEL)) {// PATH_MANAGER_TREE_LABEL, the value of this is the *new* tree to add
+            // TODO If the Node exists, then remove and add new one to replace
+            for( Node node : plottedTrees.get(PATH_MANAGER_TREE_LABEL).getChildren() ) {
+                sciView.deleteNode(node);
+            }
+            final ShapeTree newShapeTree = new ShapeTree(tree);
+            plottedTrees.replace(PATH_MANAGER_TREE_LABEL, newShapeTree);
+            for( Node node : newShapeTree.getChildren() ) {
+                sciView.addNode(node);
+            }
+        }
+        else {
+            tree.setLabel(PATH_MANAGER_TREE_LABEL);
+			add(tree);
+        }
+        //updateView();// TODO adjust viewport to fit in screen
+        //return plottedTrees.get(PATH_MANAGER_TREE_LABEL).getVisible();
         return true;
     }
 
@@ -288,6 +330,8 @@ public class SciViewSNT {
 		GuiUtils.setSystemLookAndFeel();
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
+
+		//SciView sciView = ij.context().getService(SciViewService.class).getOrCreateActiveSciView();
 
         ClassLoader cl = ClassLoader.getSystemClassLoader();
 

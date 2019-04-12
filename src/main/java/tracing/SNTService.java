@@ -41,6 +41,7 @@ import org.scijava.service.Service;
 import ij.ImagePlus;
 import ij.plugin.ZProjector;
 import ij.process.ColorProcessor;
+import sc.iview.SciView;
 import tracing.analysis.PathProfiler;
 import tracing.analysis.TreeAnalyzer;
 import tracing.analysis.TreeStatistics;
@@ -220,6 +221,28 @@ public class SNTService extends AbstractService implements ImageJService {
 	public Viewer3D getReconstructionViewer() {
 		accessActiveInstance();
 		return plugin.getUI().getReconstructionViewer(true);
+	}
+
+	/**
+	 * Returns a reference to SNT's SciView instance
+	 *
+	 * @return SNT's {@link SciView} instance.
+	 * @throws UnsupportedOperationException if SimpleNeuriteTracer is not running
+	 */
+	public SciView getSciView() {
+		accessActiveInstance();
+		return plugin.getUI().getSciView();
+	}
+
+
+	/**
+	 * Sets SNT's SciView instance
+	 *
+	 * @throws UnsupportedOperationException if SimpleNeuriteTracer is not running
+	 */
+	public void setSciView(final SciView sciView) {
+		accessActiveInstance();
+		plugin.getUI().setSciView(sciView);
 	}
 
 	/**
