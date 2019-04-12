@@ -2946,7 +2946,7 @@ public class Viewer3D {
 		@Override
 		public boolean isDisplayed() {
 			return (super.isDisplayed()) || ((somaSubShape != null) && somaSubShape
-				.isDisplayed()) || ((treeSubShape != null) && treeSubShape
+					.isDisplayed()) || ((treeSubShape != null) && treeSubShape
 					.isDisplayed());
 		}
 
@@ -3010,9 +3010,9 @@ public class Viewer3D {
 					final PointInImage pim = p.getNode(i);
 					final Coord3d coord = new Coord3d(pim.x, pim.y, pim.z);
 					final Color color = fromAWTColor(p.hasNodeColors() ? p.getNodeColor(i)
-						: p.getColor());
+							: p.getColor());
 					final float width = Math.max((float) p.getNodeRadius(i),
-						DEF_NODE_RADIUS);
+							DEF_NODE_RADIUS);
 					line.add(new Point(coord, color, width));
 				}
 				line.setShowPoints(true);
@@ -3037,7 +3037,7 @@ public class Viewer3D {
 		}
 
 		private void assembleSoma(final List<PointInImage> somaPoints,
-			final List<java.awt.Color> somaColors)
+								  final List<java.awt.Color> somaColors)
 		{
 			final Color color = fromAWTColor(SNTColor.average(somaColors));
 			switch (somaPoints.size()) {
@@ -3071,7 +3071,7 @@ public class Viewer3D {
 		}
 
 		private <T extends AbstractWireframeable & ISingleColorable> void
-			setWireFrame(final T t, final float r, final Color color)
+		setWireFrame(final T t, final float r, final Color color)
 		{
 			t.setColor(Utils.contrastColor(color).alphaSelf(0.4f));
 			t.setWireframeColor(color.alphaSelf(0.8f));
@@ -3080,11 +3080,11 @@ public class Viewer3D {
 		}
 
 		private Tube tube(final PointInImage bottom, final PointInImage top,
-			final Color color)
+						  final Color color)
 		{
 			final Tube tube = new Tube();
 			tube.setPosition(new Coord3d((bottom.x + top.x) / 2, (bottom.y + top.y) /
-				2, (bottom.z + top.z) / 2));
+					2, (bottom.z + top.z) / 2));
 			final float height = (float) bottom.distanceTo(top);
 			tube.setVolume((float) bottom.v, (float) top.v, height);
 			return tube;
@@ -3094,7 +3094,7 @@ public class Viewer3D {
 			final Sphere s = new Sphere();
 			s.setPosition(new Coord3d(center.x, center.y, center.z));
 			final float radius = (float) Math.max(center.v, SOMA_SCALING_FACTOR *
-				defThickness);
+					defThickness);
 			s.setVolume(radius);
 			setWireFrame(s, radius, color);
 			return s;
@@ -3139,7 +3139,7 @@ public class Viewer3D {
 		}
 
 		public double[] colorize(final String measurement,
-			final ColorTable colorTable)
+								 final ColorTable colorTable)
 		{
 			final TreeColorMapper colorizer = new TreeColorMapper();
 			colorizer.map(tree, measurement, colorTable);
@@ -3966,7 +3966,8 @@ public class Viewer3D {
 		GuiUtils.setSystemLookAndFeel();
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
-		final Tree tree = new Tree("/home/tferr/code/test-files/AA0100.swc");
+		//final Tree tree = new Tree("/home/tferr/code/test-files/AA0100.swc");
+		final Tree tree = new Tree("/home/kharrington/Dropbox/quickGitBackup/instar-superstar/data/pair/A02m_a3l Pseudolooper-3_406883.swc");
 		final TreeColorMapper colorizer = new TreeColorMapper(ij.getContext());
 		colorizer.map(tree, TreeColorMapper.BRANCH_ORDER, ColorTables.ICE);
 		final double[] bounds = colorizer.getMinMax();

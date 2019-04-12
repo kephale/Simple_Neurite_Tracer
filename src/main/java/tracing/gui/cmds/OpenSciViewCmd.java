@@ -21,6 +21,7 @@ public class OpenSciViewCmd implements Command {
 
     @Override
     public void run() {
+        System.out.println("SetSciView in OpenSciViewCmd");
         sntService.setSciView(sciView);
     }
 }

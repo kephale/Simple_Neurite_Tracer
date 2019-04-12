@@ -251,6 +251,7 @@ public class SNTUI extends JDialog {
 	protected boolean finishOnDoubleConfimation = true;
 	protected boolean discardOnDoubleCancellation = true;
 	protected boolean askUserConfirmation = true;
+	private JButton svSyncPathManager;
 
 	/**
 	 * Instantiates SNT's main UI and associated {@link PathManagerUI} and
@@ -1622,12 +1623,13 @@ public class SNTUI extends JDialog {
 		openSciView.addActionListener(e -> {
 			// if (noPathsError()) return;
 			if (sciView == null) {
-//				final SciViewService sciViewService = plugin.getContext().getService(
-//					SciViewService.class);
+				final SciViewService sciViewService = plugin.getContext().getService(
+					SciViewService.class);
 				//sciViewViewer.setDefaultColor(new ColorRGB(plugin.deselectedColor.getRed(),
 				//	plugin.deselectedColor.getGreen(), plugin.deselectedColor.getBlue()));
 				sciViewSNT = new SciViewSNT();
-				(new CmdRunner(OpenSciViewCmd.class)).execute();
+				CmdRunner cmdRunner = (new CmdRunner(OpenSciViewCmd.class));
+				cmdRunner.execute();
 //				while( sciViewSNT == null || sciViewSNT.sciView == null || !sciViewSNT.sciView.isInitialized()  ) {
 //					try {
 //						Thread.sleep(20);
@@ -1635,10 +1637,32 @@ public class SNTUI extends JDialog {
 //						ex.printStackTrace();
 //					}
 //				}
-				if (pathAndFillManager.size() > 0) sciViewSNT.syncPathManagerList();
+                // TODO can we get to the SNT service?
+//				sciView = sciViewService.getOrCreateActiveSciView();
+                System.out.println( "SciView: " + sciView );
+//                while( !cmdRunner.isDone() ) {
+//                //while( sciView == null || !sciView.isInitialized() ) {
+//                    try {
+//                        Thread.sleep(20);
+//                    } catch (InterruptedException e2) {
+//                        e2.printStackTrace();
+//                    }
+//                }
+//                System.out.println( "SciView: " + sciView );
+//				if (pathAndFillManager.size() > 0) sciViewSNT.syncPathManagerList();
 //				SciViewService sciViewService = SNT.getContext().getService(SciViewService.class);
 //				sciView = sciViewService.getOrCreateActiveSciView();
 //				sciViewSNT.sciView = sciView;
+			}
+		});
+
+		svSyncPathManager = new JButton("Sync PathManager to SciView");
+
+		svSyncPathManager.addActionListener(e -> {
+			// if (noPathsError()) return;
+			if (sciView != null) {
+				sciViewSNT.sciView = sciView;
+				if (pathAndFillManager.size() > 0) sciViewSNT.syncPathManagerList();
 			}
 		});
 
@@ -1648,6 +1672,7 @@ public class SNTUI extends JDialog {
 		gdb.fill = GridBagConstraints.HORIZONTAL;
 		gdb.weightx = 0.5;
 		panel.add(openSciView, gdb);
+		panel.add(svSyncPathManager, gdb);
 		return panel;
 	}
 

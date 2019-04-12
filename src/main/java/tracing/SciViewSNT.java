@@ -8,7 +8,6 @@ import org.jzy3d.colors.ISingleColorable;
 import org.jzy3d.plot3d.primitives.AbstractWireframeable;
 import org.scijava.util.ColorRGB;
 import sc.iview.SciView;
-import sc.iview.SciViewService;
 import sc.iview.vector.ClearGLVector3;
 import sc.iview.vector.DoubleVector3;
 import sc.iview.vector.FloatVector3;
@@ -24,9 +23,6 @@ import java.util.*;
 import java.util.List;
 
 public class SciViewSNT {
-
-    // TODO finish TODO from SNTUI for adding the SciView button which launches a SciView command
-
     private final static String PATH_MANAGER_TREE_LABEL = "Path Manager Contents";
 
     protected SciView sciView;
@@ -71,7 +67,7 @@ public class SciViewSNT {
 		final ShapeTree shapeTree = new ShapeTree(tree);
 		plottedTrees.put(label, shapeTree);
 		addItemToManager(label);
-		for( Node node : shapeTree.getChildren() ) {
+		for( Node node : shapeTree.get().getChildren() ) {
 		    sciView.addNode(node);
         }
 	}
@@ -89,7 +85,7 @@ public class SciViewSNT {
             }
             final ShapeTree newShapeTree = new ShapeTree(tree);
             plottedTrees.replace(PATH_MANAGER_TREE_LABEL, newShapeTree);
-            for( Node node : newShapeTree.getChildren() ) {
+            for( Node node : newShapeTree.get().getChildren() ) {
                 sciView.addNode(node);
             }
         }
@@ -97,12 +93,9 @@ public class SciViewSNT {
             tree.setLabel(PATH_MANAGER_TREE_LABEL);
 			add(tree);
         }
-        //updateView();// TODO adjust viewport to fit in screen
-        //return plottedTrees.get(PATH_MANAGER_TREE_LABEL).getVisible();
         return true;
     }
 
-    // TODO replace with SciView rendering
     private class ShapeTree extends Node {
 
         private static final float SOMA_SCALING_FACTOR = 2.5f;
@@ -176,8 +169,9 @@ public class SciViewSNT {
                     final PointInImage pim = p.getNode(i);
                     final ClearGLVector3 coord = new ClearGLVector3((float)pim.x, (float)pim.y, (float)pim.z);
                     final Material mat = new Material();
-                    final ColorRGB color = fromAWTColor(p.hasNodeColors() ? p.getNodeColor(i)
-                            : p.getColor());
+//                    ColorRGB color = fromAWTColor(p.hasNodeColors() ? p.getNodeColor(i)
+//                            : p.getColor());
+                    ColorRGB color = new ColorRGB(255,0,0);
                     mat.setDiffuse(new GLVector(color.getRed(),color.getGreen(),color.getBlue()));
                     final float width = Math.max((float) p.getNodeRadius(i),
                             DEF_NODE_RADIUS);
@@ -206,7 +200,8 @@ public class SciViewSNT {
         private void assembleSoma(final List<PointInImage> somaPoints,
                                   final List<java.awt.Color> somaColors)
         {
-            ColorRGB col = fromAWTColor(SNTColor.average(somaColors));
+            //ColorRGB col = fromAWTColor(SNTColor.average(somaColors));
+            ColorRGB col = new ColorRGB(0,255,0);
             switch (somaPoints.size()) {
                 case 0:
                     //SNT.log(tree.getLabel() + ": No soma attribute");
@@ -243,7 +238,7 @@ public class SciViewSNT {
         }
 
         private ColorRGB fromAWTColor(Color average) {
-            return null;
+            return new ColorRGB(average.getRed(),average.getGreen(),average.getBlue());
         }
 
         private <T extends AbstractWireframeable & ISingleColorable> void
@@ -327,6 +322,7 @@ public class SciViewSNT {
 
     /* IDE debug method */
 	public static void main(final String[] args) throws InterruptedException {
+	    SceneryBase.xinitThreads();
 		GuiUtils.setSystemLookAndFeel();
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
