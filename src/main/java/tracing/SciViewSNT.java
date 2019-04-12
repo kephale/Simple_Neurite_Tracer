@@ -163,22 +163,29 @@ public class SciViewSNT {
                 }
 
                 // Assemble arbor(s)
-                final Line line = new Line();
-                line.setCapacity(p.size());
+                //final Line line = new Line();
+                //line.setCapacity(p.size());
+                //points = new
+                Vector3[] points = new Vector3[p.size()];
+                ColorRGB color = new ColorRGB(255,0,0);
+                float scaleFactor = 0.1f;
                 for (int i = 0; i < p.size(); ++i) {
                     final PointInImage pim = p.getNode(i);
                     final ClearGLVector3 coord = new ClearGLVector3((float)pim.x, (float)pim.y, (float)pim.z);
                     final Material mat = new Material();
 //                    ColorRGB color = fromAWTColor(p.hasNodeColors() ? p.getNodeColor(i)
 //                            : p.getColor());
-                    ColorRGB color = new ColorRGB(255,0,0);
+
                     mat.setDiffuse(new GLVector(color.getRed(),color.getGreen(),color.getBlue()));
                     final float width = Math.max((float) p.getNodeRadius(i),
                             DEF_NODE_RADIUS);
-                    line.addPoint(coord.source());
+                    System.out.println( "(point " + i + " " + coord.source() + ")" );
+                    points[i] = new FloatVector3(coord.source().x()*scaleFactor,coord.source().y()*scaleFactor,coord.source().z()*scaleFactor);
+                    //line.addPoint(coord.source());
                 }
-                line.setEdgeWidth(defThickness);
-                sciView.addNode(line);
+                Line line = (Line) sciView.addLine(points,color,defThickness);
+                //line.setEdgeWidth(defThickness);
+                //sciView.addNode(line);
                 lines.add(line);
             }
 
@@ -328,14 +335,6 @@ public class SciViewSNT {
 		ij.ui().showUI();
 
 		//SciView sciView = ij.context().getService(SciViewService.class).getOrCreateActiveSciView();
-
-        ClassLoader cl = ClassLoader.getSystemClassLoader();
-
-        URL[] urls = ((URLClassLoader)cl).getURLs();
-
-        for(URL url: urls){
-        	System.out.println(url.getFile());
-        }
 		//final Tree tree = new Tree("/home/tferr/code/test-files/AA0100.swc");
 //		final Tree tree = new Tree("/home/kharrington/Dropbox/quickGitBackup/instar-superstar/data/pair/A02m_a3l Pseudolooper-3_406883.swc");
 //		final TreeColorMapper colorizer = new TreeColorMapper(ij.getContext());
