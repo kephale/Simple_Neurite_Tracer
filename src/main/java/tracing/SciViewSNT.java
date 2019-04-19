@@ -68,6 +68,7 @@ public class SciViewSNT {
 		plottedTrees.put(label, shapeTree);
 		addItemToManager(label);
 		for( Node node : shapeTree.get().getChildren() ) {
+		    System.out.println("addTree: node " + node.getMetadata().get("pathID"));
 		    sciView.addNode(node);
         }
 	}
@@ -80,20 +81,34 @@ public class SciViewSNT {
                 .getPathsFiltered());
         if (plottedTrees.containsKey(PATH_MANAGER_TREE_LABEL)) {// PATH_MANAGER_TREE_LABEL, the value of this is the *new* tree to add
             // TODO If the Node exists, then remove and add new one to replace
+            System.out.println("Sync path manager");
+            System.out.println("Existing num children: " + plottedTrees.get(PATH_MANAGER_TREE_LABEL).getChildren().size() );
             for( Node node : plottedTrees.get(PATH_MANAGER_TREE_LABEL).getChildren() ) {
-                sciView.deleteNode(node);
-            }
-            final ShapeTree newShapeTree = new ShapeTree(tree);
-            plottedTrees.replace(PATH_MANAGER_TREE_LABEL, newShapeTree);
-            for( Node node : newShapeTree.get().getChildren() ) {
-                sciView.addNode(node);
+                syncNode(tree,node);
+                //sciView.deleteNode(node);
             }
         }
         else {
+            System.out.println("Adding a new tree instead of sync");
             tree.setLabel(PATH_MANAGER_TREE_LABEL);
 			add(tree);
         }
         return true;
+    }
+
+    private void syncNode(Tree tree, Node node) {
+        // Every Path in tree has a unique getID()
+        // Node should know this ID for syncing
+        Integer pathID = (Integer) node.getMetadata().get("pathID");
+        if( pathID != null ) {
+            for (final Path p : tree.list()) {
+                if (p.getID() == pathID) {
+                    // Sync the path to the node
+
+                    break;
+                }
+            }
+        }
     }
 
     private class ShapeTree extends Node {
@@ -184,6 +199,7 @@ public class SciViewSNT {
                     //line.addPoint(coord.source());
                 }
                 Line line = (Line) sciView.addLine(points,color,defThickness);
+                line.getMetadata().put("pathID",p.getID());
                 //line.setEdgeWidth(defThickness);
                 //sciView.addNode(line);
                 lines.add(line);
