@@ -2883,6 +2883,10 @@ public class SNTUI extends JDialog {
 		}
 	}
 
+	public void setSciViewSNT(SciViewSNT sciViewSNT) {
+		this.sciViewSNT = sciViewSNT;
+	}
+
 	public SciViewSNT getSciViewSNT() {
 		return sciViewSNT;
 	}
