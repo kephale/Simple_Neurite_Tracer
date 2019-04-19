@@ -106,8 +106,8 @@
 		<license.copyrightOwners>Fiji developers.</license.copyrightOwners>
 		<license.projectName>Fiji distribution of ImageJ for the life sciences.</license.projectName>
 
-		<scenery.version>0.7.0-beta-3</scenery.version>
-		<sciview.version>0.2.0-beta-2-SNAPSHOT</sciview.version>
+<!--		<scenery.version>0.7.0-beta-3</scenery.version>-->
+<!--		<sciview.version>0.2.0-beta-2-SNAPSHOT</sciview.version>-->
 		<imagej-launcher.version>5.0.1-SNAPSHOT</imagej-launcher.version>
 
 		<!-- NB: Deploy releases to the ImageJ Maven repository. -->
@@ -124,6 +124,10 @@
 		<repository>
 			<id>Jzy3D.releases</id>
 			<url>http://maven.jzy3d.org/releases/</url>
+		</repository>
+		<repository>
+			<id>jitpack</id>
+			<url>https://jitpack.io</url>
 		</repository>
 	</repositories>
 
@@ -264,9 +268,9 @@
 			<artifactId>jgrapht-ext</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>sc.iview</groupId>
+			<groupId>com.github.scenerygraphics</groupId>
 			<artifactId>sciview</artifactId>
-			<version>0.2.0-beta-2-SNAPSHOT</version>
+			<version>41bfe8b396e0a2471f398529cc75b8b62313e228</version>
 		</dependency>
 	</dependencies>
 </project>
