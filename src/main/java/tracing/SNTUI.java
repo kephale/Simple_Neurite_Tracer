@@ -2883,6 +2883,10 @@ public class SNTUI extends JDialog {
 		}
 	}
 
+	public SciViewSNT getSciViewSNT() {
+		return sciViewSNT;
+	}
+
 	protected void toggleFilteredImgTracing() {
 		assert SwingUtilities.isEventDispatchThread();
 		// Do nothing if we are not allowed to enable FilteredImgTracing
