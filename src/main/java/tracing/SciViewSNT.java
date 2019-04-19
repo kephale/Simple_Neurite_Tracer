@@ -32,6 +32,13 @@ public class SciViewSNT {
         plottedTrees = new TreeMap<String,Node>();
     }
 
+    public SciView getSciView() {
+        return sciView;
+    }
+
+    public void setSciView(SciView sciView) {
+        this.sciView = sciView;
+    }
 
 	private void addItemToManager(final String label) {
 
@@ -81,15 +88,12 @@ public class SciViewSNT {
                 .getPathsFiltered());
         if (plottedTrees.containsKey(PATH_MANAGER_TREE_LABEL)) {// PATH_MANAGER_TREE_LABEL, the value of this is the *new* tree to add
             // TODO If the Node exists, then remove and add new one to replace
-            System.out.println("Sync path manager");
-            System.out.println("Existing num children: " + plottedTrees.get(PATH_MANAGER_TREE_LABEL).getChildren().size() );
             for( Node node : plottedTrees.get(PATH_MANAGER_TREE_LABEL).getChildren() ) {
                 syncNode(tree,node);
                 //sciView.deleteNode(node);
             }
         }
         else {
-            System.out.println("Adding a new tree instead of sync");
             tree.setLabel(PATH_MANAGER_TREE_LABEL);
 			add(tree);
         }
@@ -349,6 +353,8 @@ public class SciViewSNT {
 		GuiUtils.setSystemLookAndFeel();
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
+
+
 
 		//SciView sciView = ij.context().getService(SciViewService.class).getOrCreateActiveSciView();
 		//final Tree tree = new Tree("/home/tferr/code/test-files/AA0100.swc");
