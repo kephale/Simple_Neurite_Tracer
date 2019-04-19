@@ -109,6 +109,7 @@
 <!--		<scenery.version>0.7.0-beta-3</scenery.version>-->
 <!--		<sciview.version>0.2.0-beta-2-SNAPSHOT</sciview.version>-->
 		<imagej-launcher.version>5.0.1-SNAPSHOT</imagej-launcher.version>
+		<scenery.version>0.7.0-beta-4-SNAPSHOT</scenery.version>
 
 		<!-- NB: Deploy releases to the ImageJ Maven repository. -->
 		<releaseProfiles>deploy-to-imagej</releaseProfiles>
