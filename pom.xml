@@ -271,7 +271,7 @@
 		<dependency>
 			<groupId>com.github.scenerygraphics</groupId>
 			<artifactId>sciview</artifactId>
-			<version>41bfe8b396e0a2471f398529cc75b8b62313e228</version>
+			<version>cd2dab32e2155d0583c34893d3b79ef9939daf4d</version>
 		</dependency>
 	</dependencies>
 </project>
