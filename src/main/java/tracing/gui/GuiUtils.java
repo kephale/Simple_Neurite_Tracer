@@ -27,6 +27,8 @@ import com.jidesoft.popup.JidePopup;
 import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Desktop;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
@@ -44,7 +46,10 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
@@ -209,8 +214,26 @@ public class GuiUtils {
 		return (yesNoDialog(msg, title) == JOptionPane.YES_OPTION);
 	}
 
+	public void error(final String msg, final String title, final String helpURI) {
+		final JOptionPane optionPane = new JOptionPane(getLabel(msg), JOptionPane.ERROR_MESSAGE,
+				JOptionPane.YES_NO_OPTION, null, new String[] { "Online Help", "OK" });
+		final JDialog d = optionPane.createDialog(parent, title);
+		d.setVisible(true);
+		d.dispose();
+		if ("Online Help".equals(optionPane.getValue()))
+			openURL(helpURI);
+	}
+
 	public boolean getConfirmation(final String msg, final String title, final String yesLabel, final String noLabel) {
 		return (yesNoDialog(msg, title, yesLabel, noLabel) == JOptionPane.YES_OPTION);
+	}
+
+	public String getChoice(final String message, final String title, final String[] choices,
+			final String defaultChoice) {
+		final String selectedValue = (String) JOptionPane.showInputDialog(parent, //
+				message, title, JOptionPane.QUESTION_MESSAGE, null, choices,
+				(defaultChoice == null) ? choices[0] : defaultChoice);
+		return selectedValue;
 	}
 
 	public boolean[] getPersistentConfirmation(final String msg,
@@ -341,7 +364,9 @@ public class GuiUtils {
 		return chosenFile;
 	}
 
-	public File openFile(final String title, final File file,
+	
+	@SuppressWarnings("unused")
+	private File openFile(final String title, final File file,
 		final List<String> allowedExtensions)
 	{
 		final JFileChooser chooser = fileChooser(title, file,
@@ -351,7 +376,8 @@ public class GuiUtils {
 		return null;
 	}
 
-	public File chooseDirectory(final String title, final File file) {
+	@SuppressWarnings("unused")
+	private File chooseDirectory(final String title, final File file) {
 		final JFileChooser chooser = fileChooser(title, file,
 			JFileChooser.DIRECTORIES_ONLY, null);
 		if (chooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION)
@@ -460,6 +486,11 @@ public class GuiUtils {
 		return (Integer) result;
 	}
 
+	public void addTooltip(final JComponent c, final String text) {
+		final int length = Math.round(c.getFontMetrics(c.getFont()).stringWidth(text));
+		c.setToolTipText("<html>" + ((length > 500) ? "<body><div style='width:500;'>" : "") + text);
+	}
+
 	private JLabel getLabel(final String text) {
 		if (text == null || text.startsWith("<")) {
 			return new JLabel(text);
@@ -527,10 +558,15 @@ public class GuiUtils {
 	}
 
 	public static void addSeparator(final JComponent component,
-		final String heading, final boolean vgap, final GridBagConstraints c)
+			final String heading, final boolean vgap, final GridBagConstraints c)
+		{
+			addSeparator(component, leftAlignedLabel(heading, null, true), vgap, c);
+		}
+
+	public static void addSeparator(final JComponent component,
+		final JLabel label, final boolean vgap, final GridBagConstraints c)
 	{
 		final int previousTopGap = c.insets.top;
-		final JLabel label = leftAlignedLabel(heading, true);
 		final Font font = label.getFont();
 		label.setFont(font.deriveFont((float) (font.getSize() * .85)));
 		if (vgap) c.insets.top = (int) (component.getFontMetrics(font).getHeight() *
@@ -539,16 +575,48 @@ public class GuiUtils {
 		if (vgap) c.insets.top = previousTopGap;
 	}
 
-	public static JLabel leftAlignedLabel(final String text,
+	public static JLabel leftAlignedLabel(final String text, final boolean enabled) {
+		return leftAlignedLabel(text, null, enabled);
+	}
+
+	public static JLabel leftAlignedLabel(final String text, final String uri,
 		final boolean enabled)
 	{
 		final JLabel label = new JLabel(text);
 		label.setHorizontalAlignment(SwingConstants.LEFT);
 		label.setEnabled(enabled);
-		if (!enabled) label.setForeground(getDisabledComponentColor()); // required
-																																		// for
-																																		// MACOS!?
+		final Color fg = (enabled) ? label.getForeground() : getDisabledComponentColor(); // required
+		label.setForeground(fg);														// for MACOS!?
+		if (uri != null && Desktop.isDesktopSupported()) {
+			label.addMouseListener(new MouseAdapter() {
+
+				@Override
+				public void mouseEntered(MouseEvent e) {
+					label.setForeground(Color.BLUE);
+					label.setCursor(new Cursor(Cursor.HAND_CURSOR));
+				}
+
+				@Override
+				public void mouseExited(MouseEvent e) {
+					label.setForeground(fg);
+					label.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+				}
+
+				@Override
+				public void mouseClicked(MouseEvent e) {
+					openURL(uri);
+				}
+			});
+		}
 		return label;
+	}
+
+	private static void openURL(final String uri) {
+		try {
+			Desktop.getDesktop().browse(new URI(uri));
+		} catch (IOException | URISyntaxException ex) {
+			SNT.log("Could not open " + uri);
+		}
 	}
 
 	public static ImageIcon createIcon(final Color color, final int width,

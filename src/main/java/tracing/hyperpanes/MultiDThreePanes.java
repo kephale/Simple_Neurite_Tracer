@@ -48,7 +48,7 @@ public class MultiDThreePanes implements PaneOwner {
 	/** SNT's ZY view */
 	public static final int ZY_PLANE = 2; // constant x
 
-	protected static final String MIP_OVERLAY_IDENTIFIER = "SNT-MIP-OVERLAY";
+	protected static final String MIP_OVERLAY_IDENTIFIER_PREFIX = "SNT-MIP-OVERLAY";
 
 	protected ImagePlus xy;
 	protected ImagePlus xz;
@@ -64,6 +64,7 @@ public class MultiDThreePanes implements PaneOwner {
 	protected boolean singleSlice;
 
 	private boolean disable_zoom;
+	private boolean initCanvasesAndWindows = true;
 
 	public MultiDThreePanes() {}
 
@@ -243,11 +244,16 @@ public class MultiDThreePanes implements PaneOwner {
 	}
 
 	public void removeMIPOverlayAllPanes() {
+		removeMIPOverlayAllPanes(MIP_OVERLAY_IDENTIFIER_PREFIX + "1", MIP_OVERLAY_IDENTIFIER_PREFIX + "2");
+	}
+
+	protected void removeMIPOverlayAllPanes(final String... identifiers) {
 		for (final ImagePlus imp : new ImagePlus[] { xy, xz, zy }) {
 			if (imp == null) continue;
 			final Overlay overlay = imp.getOverlay();
 			if (overlay != null && overlay.size() > 0) {
-				overlay.remove(MIP_OVERLAY_IDENTIFIER);
+				for (String identifier : identifiers)
+					overlay.remove(identifier);
 				imp.getCanvas().repaint();
 			}
 		}
@@ -661,7 +667,10 @@ public class MultiDThreePanes implements PaneOwner {
 			xz.setTitle("XZ " + title);
 			showStatus(0, 0, "Generating ZY planes...");
 		}
+		if (initCanvasesAndWindows) initCanvasesAndWindows();
+	}
 
+	private void initCanvasesAndWindows() {
 		xy_canvas = createCanvas(xy, XY_PLANE);
 		if (isDummy()) {
 			xy_window = null;
@@ -678,7 +687,6 @@ public class MultiDThreePanes implements PaneOwner {
 			zy_window = new StackWindow(zy, zy_canvas);
 			zy_canvas.requestFocusInWindow();
 		}
-
 	}
 
 	/*
@@ -688,8 +696,7 @@ public class MultiDThreePanes implements PaneOwner {
 	 * plane. This method returns the x, y and z coordinates of all the points in
 	 * that column.
 	 */
-
-	public int[][] findAllPointsAlongLine(final int x_in_pane,
+	protected int[][] findAllPointsAlongLine(final int x_in_pane,
 		final int y_in_pane, final int plane)
 	{
 		int n = -1;
@@ -729,18 +736,6 @@ public class MultiDThreePanes implements PaneOwner {
 		return result;
 	}
 
-	/* IDE debug method **/
-	public static void main(final String[] args) {
-		if (ij.IJ.getInstance() == null) new ij.ImageJ();
-		final String path = "https://imagej.net/images/Spindly-GFP.zip";
-		final ImagePlus imp = ij.IJ.openImage(path);
-		// imp.setActiveChannels("01");
-		final MultiDThreePanes mdp = new MultiDThreePanes();
-		mdp.single_pane = false;
-		mdp.initialize(imp, 20);
-		mdp.reloadZYXZpanes(30);
-	}
-
 	@Override
 	public void showStatus(final int progress, final int maximum,
 		final String message)
@@ -753,4 +748,25 @@ public class MultiDThreePanes implements PaneOwner {
 		GuiUtils.errorPrompt(error);
 	}
 
+	public static ImagePlus[] getZYXZ(final ImagePlus xy, final int frame) {
+		final MultiDThreePanes mdp = new MultiDThreePanes();
+		mdp.initCanvasesAndWindows = false;
+		mdp.initialize(xy, frame);
+		return new ImagePlus[] {mdp.zy, mdp.xz};
+	}
+
+	/* IDE debug method **/
+	public static void main(final String[] args) {
+		if (ij.IJ.getInstance() == null) new ij.ImageJ();
+		final String path = "https://imagej.net/images/Spindly-GFP.zip";
+		final ImagePlus imp = ij.IJ.openImage(path);
+		for (ImagePlus view : MultiDThreePanes.getZYXZ(imp, 20)) {
+			view.show();
+		}
+		imp.setActiveChannels("01");
+		final MultiDThreePanes mdp = new MultiDThreePanes();
+		mdp.single_pane = false;
+		mdp.initialize(imp, 20);
+		mdp.reloadZYXZpanes(30);
+	}
 }

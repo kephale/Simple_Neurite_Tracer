@@ -109,8 +109,6 @@ public class PathAndFillManager extends DefaultHandler implements
 	private double y_spacing;
 	private double z_spacing;
 	private String spacing_units;
-	/** BoundingBox defined by the plugin's image if any */
-	private BoundingBox pluginBoundingBox;
 	/** BoundingBox for existing Paths */
 	private BoundingBox boundingBox;
 	protected boolean spacingIsUnset;
@@ -153,7 +151,6 @@ public class PathAndFillManager extends DefaultHandler implements
 		y_spacing = boundingBox.ySpacing;
 		z_spacing = boundingBox.zSpacing;
 		spacing_units = boundingBox.getUnit();
-		pluginBoundingBox = null;
 		plugin = null;
 		spacingIsUnset = true;
 	}
@@ -161,17 +158,7 @@ public class PathAndFillManager extends DefaultHandler implements
 	protected PathAndFillManager(final SimpleNeuriteTracer plugin) {
 		this();
 		this.plugin = plugin;
-		x_spacing = plugin.x_spacing;
-		y_spacing = plugin.y_spacing;
-		z_spacing = plugin.z_spacing;
-		spacing_units = plugin.spacing_units;
-		pluginBoundingBox = new BoundingBox();
-		pluginBoundingBox.setOrigin(new PointInImage(0, 0, 0));
-		pluginBoundingBox.setSpacing(x_spacing, y_spacing, z_spacing,
-			spacing_units);
-		pluginBoundingBox.setDimensions(plugin.width, plugin.height, plugin.depth);
-		boundingBox = pluginBoundingBox;
-		spacingIsUnset = false;
+		syncPluginSpatialSettings();
 		addPathAndFillListener(plugin);
 	}
 
@@ -195,6 +182,18 @@ public class PathAndFillManager extends DefaultHandler implements
 		this.y_spacing = y_spacing;
 		this.z_spacing = z_spacing;
 		this.spacing_units = boundingBox.getUnit();
+		spacingIsUnset = false;
+	}
+
+	protected void syncPluginSpatialSettings() {
+		x_spacing = plugin.x_spacing;
+		y_spacing = plugin.y_spacing;
+		z_spacing = plugin.z_spacing;
+		spacing_units = plugin.spacing_units;
+		boundingBox.setOrigin(new PointInImage(0, 0, 0));
+		boundingBox.setSpacing(x_spacing, y_spacing, z_spacing,
+			spacing_units);
+		boundingBox.setDimensions(plugin.width, plugin.height, plugin.depth);
 		spacingIsUnset = false;
 	}
 
@@ -2005,36 +2004,32 @@ public class PathAndFillManager extends DefaultHandler implements
 			x_spacing = boundingBox.xSpacing;
 			y_spacing = boundingBox.ySpacing;
 			z_spacing = boundingBox.zSpacing;
-			boundingBox.setOrigin(new PointInImage(0, 0, 0));
+			// NB: we must leave boundingBox origin unset so that it's dimensions can be properly computed
 			spacingIsUnset = false;
 		}
 
 		// We'll now iterate (again!) through the points to fix some ill-assembled
-		// files
-		// that do exist in the wild. We typically encounter two major issues:
-		// a) Files in world coordinates (good) but with reversed signs
-		// b) Files in pixel coordinates
-		final double minimumVoxelSpacing = Math.min(Math.abs(x_spacing), Math.min(
-			Math.abs(y_spacing), Math.abs(z_spacing)));
+		// files that do exist in the wild defined in pixel coordinates!
+		if (assumeCoordinatesInVoxels) {
+			final double minimumVoxelSpacing = Math.min(Math.abs(x_spacing),
+					Math.min(Math.abs(y_spacing), Math.abs(z_spacing)));
 
-		final Iterator<SWCPoint> it = points.iterator();
-		while (it.hasNext()) {
-			final SWCPoint point = it.next();
+			final Iterator<SWCPoint> it = points.iterator();
+			while (it.hasNext()) {
+				final SWCPoint point = it.next();
 
-			// deal with SWC files that use pixel coordinates
-			if (assumeCoordinatesInVoxels) {
 				point.x *= x_spacing;
 				point.y *= y_spacing;
 				point.z *= z_spacing;
 				// this just seems to be the convention in the broken files we've came
 				// across
 				point.radius *= minimumVoxelSpacing;
-			}
 
-			// If the radius is set to near zero, then artificially set it to half
-			// of the voxel spacing so that something* appears in the 3D Viewer!
-			if (Math.abs(point.radius) < 0.0000001) point.radius =
-				minimumVoxelSpacing / 2;
+				// If the radius is set to near zero, then artificially set it to half
+				// of the voxel spacing so that something* appears in the 3D Viewer!
+				if (Math.abs(point.radius) < 0.0000001)
+					point.radius = minimumVoxelSpacing / 2;
+			}
 		}
 
 		// FIXME: This is really slow with large SWC files
@@ -2102,16 +2097,21 @@ public class PathAndFillManager extends DefaultHandler implements
 		// Infer fields for when an image has not been specified. We'll assume
 		// the image dimensions to be those of the coordinates bounding box.
 		// This allows us to open a SWC file without a source image
-		if (true) {
-			if (boundingBox == null) boundingBox = new BoundingBox();
+		{
+			if (boundingBox == null)
+				boundingBox = new BoundingBox();
 			boundingBox.compute(((TreeSet<? extends SNTPoint>) points).iterator());
-			// If a plugin exists, warn user if its image cannot render the imported
-			// nodes
-			if (pluginBoundingBox != null && !pluginBoundingBox.contains(
-				boundingBox))
-			{
-				SNT.warn(
-					"Some points are outside the image volume - you may need to change your SWC import options");
+
+			// If a plugin exists, warn user if its image cannot render imported nodes
+			if (plugin != null && plugin.getImagePlus() != null) {
+
+				final BoundingBox pluginBoundingBox = new BoundingBox();
+				pluginBoundingBox.setOrigin(new PointInImage(0, 0, 0));
+				pluginBoundingBox.setDimensions(plugin.width, plugin.height, plugin.depth);
+				if (!pluginBoundingBox.contains(boundingBox)) {
+					SNT.warn("Some nodes lay outside the image volume: you may need to "
+							+ "adjust import options or resize current image canvas");
+				}
 			}
 		}
 		return true;

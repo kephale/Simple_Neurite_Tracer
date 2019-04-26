@@ -26,6 +26,7 @@ import java.awt.Point;
 import java.io.File;
 
 import ij.Prefs;
+import ij.io.FileInfo;
 import ij3d.Content;
 import ij3d.ContentConstants;
 
@@ -35,6 +36,8 @@ import ij3d.ContentConstants;
  * @author Tiago Ferreira
  */
 public class SNTPrefs { // TODO: Adopt PrefService
+
+	public static final double DEFAULT_MULTIPLIER = 4;
 
 	private static final int DRAW_DIAMETERS_XY = 1;
 	private static final int SNAP_CURSOR = 2;
@@ -58,7 +61,11 @@ public class SNTPrefs { // TODO: Adopt PrefService
 	private static final String SNAP_Z = "tracing.snt.zsnap";
 	private static final String PATHWIN_LOC = "tracing.snt.pwloc";
 	private static final String FILLWIN_LOC = "tracing.snt.fwloc";
+	private static final String FILTERED_IMG_PATH = "tracing.snt.fipath";
+
+	@Deprecated
 	private static final String LOAD_DIRECTORY_KEY = "tracing.snt.lastdir";
+
 	private static File recentFile;
 
 	private final SimpleNeuriteTracer snt;
@@ -111,7 +118,7 @@ public class SNTPrefs { // TODO: Adopt PrefService
 	}
 
 	private int getDefaultBooleans() {
-		return DRAW_DIAMETERS_XY + SNAP_CURSOR + COMPRESSED_XML;
+		return DRAW_DIAMETERS_XY + SNAP_CURSOR + COMPRESSED_XML + AUTO_CANVAS_ACTIVATION;
 	}
 
 	private void getBooleans() {
@@ -129,15 +136,19 @@ public class SNTPrefs { // TODO: Adopt PrefService
 		snt.displayCustomPathColors = !getPref(ENFORCE_DEFAULT_PATH_COLORS);
 		snt.setShowOnlySelectedPaths(getPref(SHOW_ONLY_SELECTED), false);
 		if (!SNT.isDebugMode()) SNT.setDebugMode(getPref(DEBUG));
-		snt.cursorSnapWindowXY = (int) Prefs.get(SNAP_XY, 4);
+		snt.cursorSnapWindowXY = (int) Prefs.get(SNAP_XY, 6);
 		snt.cursorSnapWindowXY = whithinBoundaries(snt.cursorSnapWindowXY,
 			SimpleNeuriteTracer.MIN_SNAP_CURSOR_WINDOW_XY,
 			SimpleNeuriteTracer.MAX_SNAP_CURSOR_WINDOW_XY);
-		snt.cursorSnapWindowZ = (int) Prefs.get(SNAP_Z, 0);
+		snt.cursorSnapWindowZ = (int) Prefs.get(SNAP_Z, 2);
 		snt.cursorSnapWindowZ = whithinBoundaries(snt.cursorSnapWindowZ,
 			SimpleNeuriteTracer.MIN_SNAP_CURSOR_WINDOW_Z,
 			SimpleNeuriteTracer.MAX_SNAP_CURSOR_WINDOW_Z);
 		if (snt.cursorSnapWindowZ > snt.depth) snt.cursorSnapWindowZ = snt.depth;
+		{
+			final String fIpath = Prefs.get(FILTERED_IMG_PATH, null);
+			if (fIpath != null) snt.setFilteredImage(new File(fIpath));
+		}
 	}
 
 	private int whithinBoundaries(final int value, final int min, final int max) {
@@ -179,7 +190,6 @@ public class SNTPrefs { // TODO: Adopt PrefService
 		setPref(SHOW_ONLY_SELECTED, snt.showOnlySelectedPaths);
 		setPref(DEBUG, SNT.isDebugMode());
 		Prefs.set(BOOLEANS, currentBooleans);
-		clearLegacyPrefs();
 		if (isSaveWinLocations()) {
 			final SNTUI rd = snt.getUI();
 			if (rd == null) return;
@@ -188,7 +198,12 @@ public class SNTPrefs { // TODO: Adopt PrefService
 			final FillManagerUI fw = rd.getFillManager();
 			if (fw != null) Prefs.saveLocation(FILLWIN_LOC, fw.getLocation());
 		}
+		if (snt.getFilteredImage() != null) {
+			Prefs.set(FILTERED_IMG_PATH, snt.getFilteredImage().getAbsolutePath());
+		}
 		if (restoreIJ1prefs) restoreIJ1Prefs();
+		clearLegacyPrefs();
+		Prefs.savePreferences();
 	}
 
 	protected boolean isSaveWinLocations() {
@@ -213,12 +228,7 @@ public class SNTPrefs { // TODO: Adopt PrefService
 	}
 
 	protected void resetOptions() {
-		clearLegacyPrefs();
-		Prefs.set(BOOLEANS, null);
-		Prefs.set(SNAP_XY, null);
-		Prefs.set(SNAP_Z, null);
-		Prefs.set(FILLWIN_LOC, null);
-		Prefs.set(PATHWIN_LOC, null);
+		clearAll();
 		currentBooleans = UNSET_PREFS;
 	}
 
@@ -229,9 +239,12 @@ public class SNTPrefs { // TODO: Adopt PrefService
 		Prefs.set(SNAP_Z, null);
 		Prefs.set(FILLWIN_LOC, null);
 		Prefs.set(PATHWIN_LOC, null);
+		Prefs.set(FILTERED_IMG_PATH, null);
+		Prefs.savePreferences();
 	}
 
 	private static void clearLegacyPrefs() {
+		Prefs.set(LOAD_DIRECTORY_KEY, null);
 		Prefs.set("tracing.Simple_Neurite_Tracer.drawDiametersXY", null);
 	}
 
@@ -240,16 +253,15 @@ public class SNTPrefs { // TODO: Adopt PrefService
 	}
 
 	protected File getRecentFile() {
-		if (recentFile == null) return snt.loadedImageFile();
-		else return recentFile;
-	}
-
-	public static void setRecentDirectory(final String dir) {
-		Prefs.set(LOAD_DIRECTORY_KEY, dir);
-	}
-
-	public static String getRecentDirectory() {
-		return Prefs.get(LOAD_DIRECTORY_KEY, null);
+		if (recentFile == null && snt.accessToValidImageData()) {
+			try {
+				final FileInfo fInfo = snt.getImagePlus().getOriginalFileInfo();
+				recentFile = new File(fInfo.directory, fInfo.fileName);
+			} catch (final NullPointerException npe) {
+				// ignored;
+			}
+		}
+		return recentFile;
 	}
 
 }

@@ -43,8 +43,11 @@ import org.scijava.util.VersionUtils;
 
 import fiji.util.Levenshtein;
 import ij.IJ;
+import ij.ImagePlus;
 import ij.measure.Calibration;
 import ij.plugin.Colors;
+import ij.process.ImageConverter;
+import ij.process.StackConverter;
 import tracing.util.BoundingBox;
 
 /** Static utilities for SNT **/
@@ -119,6 +122,24 @@ public class SNT {
 		if (!SNT.isDebugMode()) return;
 		if (!initialized) initialize();
 		logService.warn("[SNT] " + string);
+	}
+
+	protected static void convertTo32bit(final ImagePlus imp) throws IllegalArgumentException {
+		if (imp.getBitDepth() == 32)
+			return;
+		if (imp.getNSlices() == 1)
+			new ImageConverter(imp).convertToGray32();
+		else
+			new StackConverter(imp).convertToGray32();
+	}
+
+	protected static void convertTo8bit(final ImagePlus imp) {
+		if (imp.getType() != ImagePlus.GRAY8) {
+			final boolean doScaling = ImageConverter.getDoScaling();
+			ImageConverter.setDoScaling(true);
+			new ImageConverter(imp).convertToGray8();
+			ImageConverter.setDoScaling(doScaling);
+		}
 	}
 
 	public static void csvQuoteAndPrint(final PrintWriter pw, final Object o) {

@@ -86,8 +86,9 @@ public class SNTLoaderCmd extends DynamicCommand {
 			callback = "imageChoiceChanged")
 	private String imageChoice;
 
-	@Parameter(required = false, label = "Path", description = DEF_DESCRIPTION,
-		style = FileWidget.OPEN_STYLE, callback = "sourceImageChanged")
+	@Parameter(required = false, label = "Image file",
+			description = "<HTML>Image file, when <i>Image</i> choice is <i>"+ IMAGE_FILE +"</i>",
+		style = FileWidget.OPEN_STYLE, callback = "imageFileChanged")
 	private File imageFile;
 
 	@Parameter(required = false, label = "<HTML>&nbsp;",
@@ -104,12 +105,12 @@ public class SNTLoaderCmd extends DynamicCommand {
 	private String SPACER2;
 
 	@Parameter(required = false, label = "User interface", choices = { UI_DEFAULT,
-		UI_SIMPLE },
-			description = "Ignored if no image and no reconstruction file are provided")
+		UI_SIMPLE }, description = DEF_DESCRIPTION)
 	private String uiChoice;
 
 	@Parameter(required = false, label = "Tracing channel",
-		description = DEF_DESCRIPTION, min = "1", callback = "channelChanged")
+		description = DEF_DESCRIPTION, min = "1", //
+		max = ""+ ij.CompositeImage.MAX_CHANNELS +"", callback = "channelChanged")
 	private int channel;
 
 	private ImagePlus sourceImp;
@@ -136,11 +137,9 @@ public class SNTLoaderCmd extends DynamicCommand {
 	}
 
 	private void adjustChannelInput() {
-		if (sourceImp == null) return;
-		final MutableModuleItem<Integer> channelInput = getInfo().getMutableInput(
-			"channel", Integer.class);
-		channelInput.setMaximumValue(sourceImp.getNChannels());
-		channelInput.setValue(this, channel = sourceImp.getC());
+		if (sourceImp != null && sourceImp.getTitle().equals(imageChoice)) {
+			channel = Math.min(channel, sourceImp.getNChannels());
+		}
 	}
 
 	private void loadActiveImage() {
@@ -153,7 +152,7 @@ public class SNTLoaderCmd extends DynamicCommand {
 			final String file = sourceImp.getOriginalFileInfo().fileName;
 			imageFile = (dir == null || file == null) ? null : new File(dir + file);
 		}
-		sourceImageChanged();
+		adjustFileFields(false);
 	}
 
 	@SuppressWarnings("unused")
@@ -161,16 +160,19 @@ public class SNTLoaderCmd extends DynamicCommand {
 		switch (imageChoice) {
 			case IMAGE_NONE:
 				clearImageFileChoice();
+				channel = 1;
+				uiChoice = UI_SIMPLE;
 				return;
 			case IMAGE_FILE:
 				if (null == imageFile) imageFile = currentImageFile;
-				sourceImageChanged();
+				adjustFileFields(false);
 				return;
 			default: // imageChoice is now the title of frontmost image
 				loadActiveImage();
 				if (sourceImp != null) {
 					clearImageFileChoice();
 					if (sourceImp.getNSlices() == 1) uiChoice = UI_SIMPLE;
+					adjustChannelInput();
 				}
 				return;
 		}
@@ -178,9 +180,7 @@ public class SNTLoaderCmd extends DynamicCommand {
 
 	@SuppressWarnings("unused")
 	private void channelChanged() {
-		if (IMAGE_NONE.equals(imageChoice)) {
-			channel = 1;
-		}
+		adjustChannelInput();
 	}
 
 	private void clearImageFileChoice() {
@@ -190,13 +190,18 @@ public class SNTLoaderCmd extends DynamicCommand {
 		imageFileInput.setValue(this, null);
 	}
 
-	private void sourceImageChanged() {
+	@SuppressWarnings("unused")
+	private void imageFileChanged() {
+		adjustFileFields(true);
+	}
+
+	private void adjustFileFields(final boolean adjustImageChoice) {
 		if (imageFile == null || !imageFile.exists()) {
 			imageChoice = IMAGE_NONE;
 			return;
 		}
-		if (IMAGE_NONE.equals(imageChoice)) imageChoice = IMAGE_FILE;
-		for (final String ext : new String[] { "traces", "swc" }) {
+		if (adjustImageChoice) imageChoice = IMAGE_FILE;
+		for (final String ext : new String[] { "traces", "swc" , "json"}) {
 			final File candidate = SNT.findClosestPair(imageFile, ext);
 			if (candidate != null && candidate.exists()) {
 				tracesFile = candidate;
@@ -208,7 +213,7 @@ public class SNTLoaderCmd extends DynamicCommand {
 
 	@SuppressWarnings("unused")
 	private void tracesFileChanged() {
-		if (!IMAGE_FILE.equals(imageChoice) || tracesFile == null || !tracesFile
+		if (IMAGE_FILE.equals(imageChoice) || tracesFile == null || !tracesFile
 			.exists()) return;
 		final File candidate = SNT.findClosestPair(tracesFile, "tif");
 		if (candidate != null && candidate.exists()) {
@@ -301,8 +306,9 @@ public class SNTLoaderCmd extends DynamicCommand {
 	private void initPlugin(final SimpleNeuriteTracer snt)
 	{
 		try {
+			final boolean singlePane = IMAGE_NONE.equals(imageChoice) || uiChoice.equals(UI_SIMPLE);
 			final int frame = (sourceImp == null) ? 1 : sourceImp.getFrame();
-			snt.initialize(uiChoice.equals(UI_SIMPLE), channel, frame);
+			snt.initialize(singlePane, channel, frame);
 			snt.startUI();
 		}
 		catch (final OutOfMemoryError error) {
