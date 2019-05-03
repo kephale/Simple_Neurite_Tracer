@@ -185,9 +185,10 @@ public class SciViewSNT {
                 //final Line line = new Line();
                 //line.setCapacity(p.size());
                 //points = new
-                Vector3[] points = new Vector3[p.size()];
+                Vector3[] points = new Vector3[p.size()+1];
                 ColorRGB color = new ColorRGB(255,0,0);
                 float scaleFactor = 0.1f;
+                points[0] = new FloatVector3(0,0,0);
                 for (int i = 0; i < p.size(); ++i) {
                     final PointInImage pim = p.getNode(i);
                     final ClearGLVector3 coord = new ClearGLVector3((float)pim.x, (float)pim.y, (float)pim.z);
@@ -199,7 +200,7 @@ public class SciViewSNT {
                     final float width = Math.max((float) p.getNodeRadius(i),
                             DEF_NODE_RADIUS);
                     System.out.println( "(point " + i + " " + coord.source() + ")" );
-                    points[i] = new FloatVector3(coord.source().x()*scaleFactor,coord.source().y()*scaleFactor,coord.source().z()*scaleFactor);
+                    points[i+1] = new FloatVector3(coord.source().x()*scaleFactor,coord.source().y()*scaleFactor,coord.source().z()*scaleFactor);
                     //line.addPoint(coord.source());
                 }
                 Line line = (Line) sciView.addLine(points,color,defThickness);
