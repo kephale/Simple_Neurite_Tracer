@@ -106,7 +106,7 @@
 		<license.copyrightOwners>Fiji developers.</license.copyrightOwners>
 		<license.projectName>Fiji distribution of ImageJ for the life sciences.</license.projectName>
 
-		<sciview.version>d5a5f1af0a</sciview.version>
+		<sciview.version>0aa72f7</sciview.version>
 		<imagej-launcher.version>5.0.1-SNAPSHOT</imagej-launcher.version>
 		<scenery.version>69c57496</scenery.version>
 
