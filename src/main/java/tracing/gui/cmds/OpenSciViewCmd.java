@@ -23,5 +23,6 @@ public class OpenSciViewCmd implements Command {
     public void run() {
         System.out.println("SetSciView in OpenSciViewCmd");
         sntService.setSciView(sciView);
+        sciView.getFloor().setVisible(false);
     }
 }
